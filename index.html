@@ -1597,14 +1597,14 @@
             const locationName = currentLocationName || 'Detecting...';
             const mapsUrl = currentPosition
                 ? `https://maps.google.com/maps?q=${currentPosition.latitude},${currentPosition.longitude}`
-                : '#';
+                : '';
 
             const metadata = `Procurement Supervisor Field Report
 ════════════════════════
 📸 Date & Time: ${dateShift}
 ⏰ Capture Time: ${captureTime}
 🕐 Shift: ${shift}
-📍 Location: [${locationName}](${mapsUrl})
+📍 Location: ${locationName}${mapsUrl ? '\n🗺️ Map Link: ' + mapsUrl : ''}
 
 MEETING DETAILS:
 Vendor: ${document.getElementById('fieldVendor').value || '-'}
