@@ -6,7 +6,12 @@
     <meta name="theme-color" content="#1a7a3c">
     <meta name="description" content="VD GeoTag - Vijay Dairy Field Supervisor App">
     <title>VD GeoTag</title>
-    <link rel="manifest" href="data:application/json,{\"name\":\"VD GeoTag\",\"short_name\":\"VD GeoTag\",\"start_url\":\"./\",\"display\":\"standalone\",\"background_color\":\"#ffffff\",\"theme_color\":\"#1a7a3c\",\"icons\":[{\"src\":\"Logo.png\",\"sizes\":\"192x192\",\"type\":\"image/png\",\"purpose\":\"any\"},{\"src\":\"Logo.png\",\"sizes\":\"192x192\",\"type\":\"image/png\",\"purpose\":\"maskable\"}]}">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="Logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="VD GeoTag">
+    <meta name="mobile-web-app-capable" content="yes">
     <style>
         * {
             margin: 0;
@@ -1060,40 +1065,9 @@
         async function registerServiceWorker() {
             if ('serviceWorker' in navigator) {
                 try {
-                    const swCode = `
-                    const CACHE_NAME = 'vd-geotag-v1';
-                    const urlsToCache = [
-                        './',
-                        './index.html'
-                    ];
-
-                    self.addEventListener('install', event => {
-                        event.waitUntil(
-                            caches.open(CACHE_NAME).then(cache => {
-                                return cache.addAll(urlsToCache).catch(() => {
-                                    return Promise.resolve();
-                                });
-                            })
-                        );
-                    });
-
-                    self.addEventListener('fetch', event => {
-                        event.respondWith(
-                            caches.match(event.request).then(response => {
-                                return response || fetch(event.request).catch(() => {
-                                    return new Response('Offline');
-                                });
-                            })
-                        );
-                    });
-                    `;
-
-                    const blob = new Blob([swCode], {type: 'application/javascript'});
-                    const swUrl = URL.createObjectURL(blob);
-
-                    navigator.serviceWorker.register(swUrl).catch(() => {});
+                    await navigator.serviceWorker.register('./sw.js');
                 } catch (e) {
-                    console.log('Service Worker not supported');
+                    console.log('Service Worker registration failed:', e);
                 }
             }
         }
