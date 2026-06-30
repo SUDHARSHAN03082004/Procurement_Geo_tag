@@ -1049,6 +1049,8 @@
         let allRecords = [];
         let filteredRecords = [];
         let installPrompt = null;
+        let gpsWatchId = null;
+        let gpsErrorCount = 0;
 
         // ============================================
         // INITIALIZATION
@@ -1214,12 +1216,17 @@
         function startGPS() {
             if (!('geolocation' in navigator)) {
                 console.log('Geolocation not available');
+                document.getElementById('locationStatus').textContent = 'Geolocation not available';
                 return;
             }
 
-            navigator.geolocation.watchPosition(
+            gpsErrorCount = 0;
+
+            gpsWatchId = navigator.geolocation.watchPosition(
                 (position) => {
                     currentPosition = position.coords;
+                    gpsErrorCount = 0;
+                    document.getElementById('locationStatus').textContent = '';
                     updateGPSDisplay();
                     // Only call reverse geocode if location changed significantly or first time
                     const lat = position.coords.latitude;
@@ -1233,13 +1240,30 @@
                     }
                 },
                 (error) => {
-                    console.log('GPS error:', error.message);
-                    document.getElementById('locationStatus').textContent = 'GPS error: ' + error.message;
+                    gpsErrorCount++;
+                    console.log('GPS error:', error.code, error.message);
+
+                    let statusMsg = '';
+                    if (error.code === 1) {
+                        statusMsg = '⚠️ Location permission denied. Enable in phone settings.';
+                    } else if (error.code === 3) {
+                        if (gpsErrorCount <= 1) {
+                            statusMsg = '🛰️ Getting GPS signal...';
+                        } else if (gpsErrorCount <= 3) {
+                            statusMsg = '🔄 Still searching for signal...';
+                        } else {
+                            statusMsg = '📍 Using network location...';
+                        }
+                    } else {
+                        statusMsg = gpsErrorCount <= 1 ? '📍 Getting your location...' : '🔄 Retrying location...';
+                    }
+
+                    document.getElementById('locationStatus').textContent = statusMsg;
                 },
                 {
                     enableHighAccuracy: true,
-                    maximumAge: 5000,
-                    timeout: 15000
+                    maximumAge: 0,
+                    timeout: 30000
                 }
             );
         }
