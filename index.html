@@ -1043,7 +1043,7 @@
         let currentPosition = null;
         let currentLocationName = null;
         let videoStream = null;
-        let cameraFacingMode = 'environment';
+        let cameraFacingMode = 'user';
         let capturedPhoto = null;
         let db = null;
         let allRecords = [];
@@ -1401,7 +1401,7 @@
             try {
                 const constraints = {
                     video: {
-                        facingMode: cameraFacingMode,
+                        facingMode: {ideal: cameraFacingMode},
                         width: {ideal: 1280},
                         height: {ideal: 960}
                     },
@@ -1421,8 +1421,15 @@
             if (videoStream) {
                 videoStream.getTracks().forEach(track => track.stop());
             }
+            const originalMode = cameraFacingMode;
             cameraFacingMode = cameraFacingMode === 'environment' ? 'user' : 'environment';
-            await startCamera();
+            try {
+                await startCamera();
+            } catch (error) {
+                cameraFacingMode = originalMode;
+                await startCamera();
+                showMessage('⚠️ Front camera not available. Using back camera.', 'error');
+            }
         }
 
         function capturePhoto() {
