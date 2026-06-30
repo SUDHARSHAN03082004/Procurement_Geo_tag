@@ -1485,6 +1485,8 @@
 
             if (hour >= 5 && hour < 12) {
                 shift = 'Morning';
+            } else if (hour >= 12 && hour < 16) {
+                shift = 'Afternoon';
             } else if (hour >= 16 && hour < 22) {
                 shift = 'Evening';
             }
@@ -1588,12 +1590,21 @@
 
             const dateShift = document.getElementById('fieldDateShift').value;
             const shift = dateShift.split(', ')[1] || 'Other';
+            const now = new Date();
+            const captureTime = String(now.getHours()).padStart(2, '0') + ':' +
+                               String(now.getMinutes()).padStart(2, '0') + ':' +
+                               String(now.getSeconds()).padStart(2, '0');
+            const locationName = currentLocationName || 'Detecting...';
+            const mapsUrl = currentPosition
+                ? `https://maps.google.com/maps?q=${currentPosition.latitude},${currentPosition.longitude}`
+                : '#';
 
-            const metadata = `VLCC SUPERVISOR REPORT
+            const metadata = `Procurement Supervisor Field Report
 ════════════════════════
 📸 Date & Time: ${dateShift}
+⏰ Capture Time: ${captureTime}
 🕐 Shift: ${shift}
-📍 Location: ${currentLocationName || 'Detecting...'}
+📍 Location: [${locationName}](${mapsUrl})
 
 MEETING DETAILS:
 Vendor: ${document.getElementById('fieldVendor').value || '-'}
