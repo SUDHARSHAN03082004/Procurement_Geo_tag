@@ -701,7 +701,10 @@
                     </div>
                     <span>VD GeoTag</span>
                 </div>
-                <button class="btn btn-secondary btn-small" id="adminLoginBtn">🔐 Admin Login</button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary btn-small" id="installBtn" style="display: none;">⬇️ Install App</button>
+                    <button class="btn btn-secondary btn-small" id="adminLoginBtn">🔐 Admin Login</button>
+                </div>
             </div>
 
             <div class="dashboard-content">
@@ -1045,6 +1048,7 @@
         let db = null;
         let allRecords = [];
         let filteredRecords = [];
+        let installPrompt = null;
 
         // ============================================
         // INITIALIZATION
@@ -1931,6 +1935,30 @@ GPS: ${currentPosition?.latitude.toFixed(6)}, ${currentPosition?.longitude.toFix
         // EVENT LISTENERS
         // ============================================
         function setupEventListeners() {
+            // Install app button
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                installPrompt = e;
+                document.getElementById('installBtn').style.display = 'block';
+            });
+
+            document.getElementById('installBtn').addEventListener('click', async () => {
+                if (installPrompt) {
+                    installPrompt.prompt();
+                    const {outcome} = await installPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        showMessage('✓ App installing...', 'success');
+                        document.getElementById('installBtn').style.display = 'none';
+                    }
+                    installPrompt = null;
+                }
+            });
+
+            window.addEventListener('appinstalled', () => {
+                showMessage('✓ App installed successfully!', 'success');
+                document.getElementById('installBtn').style.display = 'none';
+            });
+
             // Field page
             document.getElementById('adminLoginBtn').addEventListener('click', () => showPage('pageAdminLogin'));
             document.getElementById('flipCameraBtn').addEventListener('click', flipCamera);
