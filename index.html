@@ -1604,7 +1604,8 @@
 📸 Date & Time: ${dateShift}
 ⏰ Capture Time: ${captureTime}
 🕐 Shift: ${shift}
-📍 Location: ${locationName}${mapsUrl ? '\n🗺️ Map Link: ' + mapsUrl : ''}
+📍 Location: ${locationName}
+${mapsUrl ? mapsUrl : ''}
 
 MEETING DETAILS:
 Vendor: ${document.getElementById('fieldVendor').value || '-'}
