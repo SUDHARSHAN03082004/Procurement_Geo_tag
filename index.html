@@ -1948,7 +1948,6 @@ GPS: ${currentPosition?.latitude.toFixed(6)}, ${currentPosition?.longitude.toFix
                     const {outcome} = await installPrompt.userChoice;
                     if (outcome === 'accepted') {
                         showMessage('✓ App installing...', 'success');
-                        document.getElementById('installBtn').style.display = 'none';
                     }
                     installPrompt = null;
                 }
@@ -1956,7 +1955,6 @@ GPS: ${currentPosition?.latitude.toFixed(6)}, ${currentPosition?.longitude.toFix
 
             window.addEventListener('appinstalled', () => {
                 showMessage('✓ App installed successfully!', 'success');
-                document.getElementById('installBtn').style.display = 'none';
             });
 
             // Field page
