@@ -1290,7 +1290,55 @@
 
             document.getElementById('locationStatus').textContent = 'Fetching location name...';
 
-            // === Primary: BigDataCloud with admin-level parsing for Tamil Nadu ===
+            // === Primary: Nominatim OSM — most accurate for Tamil Nadu village names ===
+            // Nominatim has address.village = actual village name (e.g. "Peramangalam")
+            // whereas BigDataCloud locality often returns taluk level (e.g. "Musiri")
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=en`,
+                    {
+                        headers: { 'User-Agent': 'VD-GeoTag-FieldApp/1.0' },
+                        signal: AbortSignal.timeout(10000)
+                    }
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const addr = data.address || {};
+
+                    // Tamil Nadu address hierarchy (OSM):
+                    //   hamlet   → smallest settlement (ur/colony)
+                    //   village  → village panchayat (e.g. Peramangalam)
+                    //   county   → Taluk (e.g. Musiri)
+                    //   state_district → District (e.g. Tiruchirappalli)
+                    //   state    → Tamil Nadu
+                    const village  = addr.hamlet   || addr.village    || addr.suburb ||
+                                     addr.neighbourhood || addr.town  || '';
+                    const taluk    = addr.county   || '';
+                    const district = addr.state_district || addr.county || addr.city || '';
+                    const state    = addr.state    || '';
+
+                    if (village) {
+                        // Show "Musiri / Tiruchirappalli" in Taluk/District field
+                        const talukDistrict = (taluk && district && taluk !== district)
+                            ? taluk + ' / ' + district
+                            : (district || taluk || '--');
+
+                        currentLocationName = [village, talukDistrict, state].filter(v => v && v !== '--').join(', ');
+
+                        document.getElementById('locVillage').textContent = village;
+                        document.getElementById('locCity').textContent    = talukDistrict;
+                        document.getElementById('locState').textContent   = state || '--';
+                        document.getElementById('fieldLocation').value    = village + (talukDistrict !== '--' ? ', ' + talukDistrict : '');
+                        document.getElementById('locationStatus').textContent = '';
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('Nominatim failed, trying BigDataCloud...', e.message);
+            }
+
+            // === Fallback: BigDataCloud — parse admin levels to avoid returning taluk as village ===
             try {
                 const response = await fetch(
                     `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`,
@@ -1301,32 +1349,32 @@
                     const data = await response.json();
                     let village = '', taluk = '', district = '', state = '';
 
-                    // Parse localityInfo.administrative — India uses OSM admin levels:
-                    // Level 4 = State, Level 5 = District, Level 6 = Taluk, Level 8/9 = Village/Panchayat
                     if (data.localityInfo && data.localityInfo.administrative) {
                         const admins = data.localityInfo.administrative;
 
-                        const lvl4 = admins.find(a => a.adminLevel === 4);
-                        const lvl5 = admins.find(a => a.adminLevel === 5);
-                        const lvl6 = admins.find(a => a.adminLevel === 6);
-                        const lvl9 = admins.find(a => a.adminLevel === 9);
-                        const lvl8 = admins.find(a => a.adminLevel === 8);
-                        const lvl7 = admins.find(a => a.adminLevel === 7);
+                        const stateEntry    = admins.find(a => a.adminLevel === 4);
+                        const districtEntry = admins.find(a => a.adminLevel === 5);
+                        const talukEntry    = admins.find(a => a.adminLevel === 6);
 
-                        state    = lvl4 ? lvl4.name : '';
-                        district = lvl5 ? lvl5.name.replace(/ District$/i, '') : '';
-                        taluk    = lvl6 ? lvl6.name : '';
-                        // Village is the most granular available level
-                        village  = (lvl9 || lvl8 || lvl7) ? (lvl9 || lvl8 || lvl7).name : '';
+                        // Village = most granular level available (adminLevel >= 7)
+                        // DO NOT fall back to locality (it returns taluk level in TN)
+                        const villageEntry  = [...admins]
+                            .filter(a => a.adminLevel >= 7)
+                            .sort((a, b) => b.adminLevel - a.adminLevel)[0];
+
+                        state    = stateEntry    ? stateEntry.name : '';
+                        district = districtEntry ? districtEntry.name.replace(/ District$/i, '') : '';
+                        taluk    = talukEntry    ? talukEntry.name : '';
+                        village  = villageEntry  ? villageEntry.name : '';
                     }
 
-                    // Fallbacks using simple fields
-                    if (!village) village = data.locality || data.city || '';
-                    if (!taluk)   taluk   = district || data.city || '';
+                    // Only use data.locality if it's different from the taluk name
+                    if (!village && data.locality && data.locality !== taluk) {
+                        village = data.locality;
+                    }
                     if (!district) district = data.city || data.principalSubdivision || '';
-                    if (!state)   state   = data.principalSubdivision || '';
+                    if (!state)    state    = data.principalSubdivision || '';
 
-                    // Display taluk + district combined if both available
                     const talukDistrict = (taluk && district && taluk !== district)
                         ? taluk + ' / ' + district
                         : (district || taluk || '--');
@@ -1342,46 +1390,7 @@
                     return;
                 }
             } catch (e) {
-                console.log('BigDataCloud failed, trying Nominatim...', e.message);
-            }
-
-            // === Fallback: Nominatim — good Tamil Nadu village coverage via OSM ===
-            try {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=en`,
-                    {
-                        headers: { 'User-Agent': 'VD-GeoTag-FieldApp/1.0' },
-                        signal: AbortSignal.timeout(10000)
-                    }
-                );
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const addr = data.address || {};
-
-                    // Tamil Nadu field priority: hamlet > village > locality > neighbourhood > suburb > town
-                    const village  = addr.hamlet || addr.village || addr.locality ||
-                                     addr.neighbourhood || addr.suburb || addr.town || 'Not detected';
-                    // Taluk → county or state_district in Tamil Nadu
-                    const taluk    = addr.county || addr.state_district || '';
-                    const district = addr.state_district || addr.county || addr.city || '';
-                    const state    = addr.state || '--';
-
-                    const talukDistrict = (taluk && district && taluk !== district)
-                        ? taluk + ' / ' + district
-                        : (district || taluk || '--');
-
-                    currentLocationName = [village, talukDistrict, state].filter(v => v && v !== '--').join(', ');
-
-                    document.getElementById('locVillage').textContent = village;
-                    document.getElementById('locCity').textContent    = talukDistrict;
-                    document.getElementById('locState').textContent   = state;
-                    document.getElementById('fieldLocation').value    = village + (talukDistrict !== '--' ? ', ' + talukDistrict : '');
-                    document.getElementById('locationStatus').textContent = '';
-                    return;
-                }
-            } catch (error) {
-                console.log('Nominatim fallback also failed:', error.message);
+                console.log('BigDataCloud also failed:', e.message);
             }
 
             // === Both APIs failed ===
