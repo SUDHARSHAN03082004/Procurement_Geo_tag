@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a7a3c">
+    <meta name="description" content="VD GeoTag - Vijay Dairy Field Supervisor App">
+    <title>VD GeoTag</title>
+    <link rel="manifest" href="data:application/json,{\"name\":\"VD GeoTag\",\"short_name\":\"VD GeoTag\",\"start_url\":\"./\",\"display\":\"standalone\",\"background_color\":\"#ffffff\",\"theme_color\":\"#1a7a3c\",\"icons\":[{\"src\":\"Logo.png\",\"sizes\":\"192x192\",\"type\":\"image/png\",\"purpose\":\"any\"},{\"src\":\"Logo.png\",\"sizes\":\"192x192\",\"type\":\"image/png\",\"purpose\":\"maskable\"}]}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-green: #1a7a3c;
+            --dark-green: #135c2d;
+            --light-green: #e8f5ed;
+            --white: #ffffff;
+            --gray-bg: #f4f6f4;
+            --text-dark: #1a2b1e;
+            --danger: #c0392b;
+            --muted: #666666;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--gray-bg);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* PAGE VISIBILITY */
+        .page {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .page.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            color: var(--white);
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .header-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            overflow: hidden;
+        }
+
+        .header-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-green);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--dark-green);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 122, 60, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--white);
+            border: 1px solid var(--white);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background-color: #a03225;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* CARDS */
+        .card {
+            background-color: var(--white);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 12px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .gps-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .gps-item {
+            background-color: var(--light-green);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .gps-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .gps-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary-green);
+            word-break: break-all;
+        }
+
+        /* LOCATION */
+        .location-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .location-item {
+            background-color: var(--light-green);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .location-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .location-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary-green);
+            word-break: break-word;
+        }
+
+        .location-loading {
+            font-size: 13px;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        /* CLOCK */
+        .clock {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-green);
+            padding: 8px;
+        }
+
+        /* CAMERA */
+        video, canvas {
+            width: 100%;
+            border-radius: 8px;
+            background-color: #000;
+        }
+
+        .camera-section {
+            position: relative;
+            margin: 12px;
+        }
+
+        .camera-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .photo-preview {
+            margin: 12px;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .photo-preview.active {
+            display: block;
+        }
+
+        .photo-preview img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+        }
+
+        .photo-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .photo-actions.active {
+            display: flex;
+        }
+
+        /* FORM */
+        .form-section {
+            display: none;
+            padding: 16px;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="tel"],
+        textarea,
+        input[readonly] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="tel"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(26, 122, 60, 0.1);
+        }
+
+        input[readonly] {
+            background-color: var(--light-green);
+            color: var(--primary-green);
+            font-weight: 600;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .form-actions .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* FOOTER */
+        .footer {
+            background-color: var(--gray-bg);
+            padding: 12px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: auto;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* ADMIN LOGIN PAGE */
+        .login-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+        }
+
+        .login-box {
+            background-color: var(--white);
+            border-radius: 16px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .login-logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0 auto 12px;
+        }
+
+        .login-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-dark);
+            text-align: center;
+        }
+
+        .login-form {
+            margin-top: 24px;
+        }
+
+        .login-error {
+            color: var(--danger);
+            font-size: 13px;
+            text-align: center;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        .login-error.active {
+            display: block;
+        }
+
+        .login-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-direction: column;
+        }
+
+        /* ADMIN DASHBOARD */
+        .dashboard-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            gap: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+            color: var(--white);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .search-box {
+            padding: 12px;
+            margin: 12px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-input::placeholder {
+            color: var(--muted);
+        }
+
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .records-table th,
+        .records-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+        }
+
+        .records-table th {
+            background-color: var(--light-green);
+            font-weight: 600;
+            color: var(--primary-green);
+            position: sticky;
+            top: 0;
+        }
+
+        .records-table tr {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .records-table tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+
+        .no-records {
+            text-align: center;
+            padding: 32px 16px;
+            color: var(--muted);
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: 16px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--muted);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            margin-top: 12px;
+        }
+
+        .modal-photo {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            background-color: #f0f0f0;
+        }
+
+        .modal-field {
+            margin-bottom: 12px;
+        }
+
+        .modal-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .modal-value {
+            font-size: 14px;
+            color: var(--text-dark);
+            word-break: break-word;
+        }
+
+        /* EXPORT/ADMIN BUTTONS */
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            flex-wrap: wrap;
+        }
+
+        .admin-actions .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* MESSAGES */
+        .message {
+            position: fixed;
+            bottom: 20px;
+            left: 16px;
+            right: 16px;
+            padding: 16px;
+            border-radius: 12px;
+            color: var(--white);
+            z-index: 2000;
+            animation: slideUp 0.3s ease;
+            max-width: 448px;
+            margin: 0 auto;
+        }
+
+        .message.success {
+            background-color: #27ae60;
+        }
+
+        .message.error {
+            background-color: var(--danger);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 12px;
+            }
+
+            .card {
+                margin: 8px;
+                padding: 12px;
+            }
+
+            .btn {
+                font-size: 13px;
+                padding: 11px 14px;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- PAGE 1: FIELD SUPERVISOR -->
+        <div id="pageField" class="page active">
+            <div class="header">
+                <div class="header-title">
+                    <div class="header-logo">
+                        <img src="Logo.png" alt="Vijay Dairy" title="Vijay Dairy">
+                    </div>
+                    <span>VD GeoTag</span>
+                </div>
+                <button class="btn btn-secondary btn-small" id="adminLoginBtn">🔐 Admin Login</button>
+            </div>
+
+            <div class="dashboard-content">
+                <!-- CLOCK -->
+                <div class="clock" id="clockDisplay">25 June 2026, 06:45 AM</div>
+
+                <!-- GPS STATUS CARD -->
+                <div class="card">
+                    <div class="card-title">📍 GPS Status</div>
+                    <div class="gps-grid">
+                        <div class="gps-item">
+                            <div class="gps-label">Latitude</div>
+                            <div class="gps-value" id="gpsLat">Not available</div>
+                        </div>
+                        <div class="gps-item">
+                            <div class="gps-label">Longitude</div>
+                            <div class="gps-value" id="gpsLon">Not available</div>
+                        </div>
+                        <div class="gps-item">
+                            <div class="gps-label">Altitude</div>
+                            <div class="gps-value" id="gpsAlt">-- m</div>
+                        </div>
+                        <div class="gps-item">
+                            <div class="gps-label">Accuracy</div>
+                            <div class="gps-value" id="gpsAcc">-- m</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LOCATION CARD -->
+                <div class="card">
+                    <div class="card-title">🏘️ Village / Location</div>
+                    <div class="location-container">
+                        <div class="location-item">
+                            <div class="location-label">Village</div>
+                            <div class="location-value" id="locVillage">Detecting...</div>
+                        </div>
+                        <div class="location-item">
+                            <div class="location-label">City / District</div>
+                            <div class="location-value" id="locCity">--</div>
+                        </div>
+                        <div class="location-item">
+                            <div class="location-label">State</div>
+                            <div class="location-value" id="locState">--</div>
+                        </div>
+                        <div class="location-loading" id="locationStatus"></div>
+                    </div>
+                </div>
+
+                <!-- CAMERA -->
+                <div class="camera-section">
+                    <div class="card-title" style="margin: 0 12px 12px;">📷 Photo Capture</div>
+                    <video id="videoFeed" autoplay playsinline></video>
+                    <div class="camera-buttons">
+                        <button class="btn btn-primary" id="flipCameraBtn">🔄 Flip Camera</button>
+                        <button class="btn btn-primary" id="captureBtn">📷 Capture Photo</button>
+                    </div>
+
+                    <div class="photo-preview" id="photoPreview">
+                        <img id="previewImg" src="" alt="Preview">
+                    </div>
+
+                    <div class="photo-actions" id="photoActions">
+                        <button class="btn btn-primary" id="confirmPhotoBtn">✓ Confirm</button>
+                        <button class="btn btn-secondary" id="retakeBtn">⟲ Retake</button>
+                    </div>
+                </div>
+
+                <!-- FORM -->
+                <div class="form-section" id="formSection">
+                    <div class="card-title">📋 VLCC & Vendors Meet Details</div>
+
+                    <div class="form-group">
+                        <label>Date & Shift</label>
+                        <input type="text" id="fieldDateShift" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Village / Location</label>
+                        <input type="text" id="fieldLocation" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>VLCC & Vendor Name</label>
+                        <input type="text" id="fieldVendor" placeholder="-">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Route Name</label>
+                        <input type="text" id="fieldRoute" placeholder="-">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dairy Name</label>
+                        <input type="text" id="fieldDairy" placeholder="-">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Contact No</label>
+                        <input type="tel" id="fieldContact" placeholder="-">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Per Day Milk (Ltrs)</label>
+                        <input type="text" id="fieldMilk" placeholder="-">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Avg. Fat & SNF / Rate</label>
+                        <input type="text" id="fieldFatSnf" placeholder="-">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Additional Rs. Details</label>
+                        <input type="text" id="fieldAdditional" placeholder="-">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Discussion Points</label>
+                        <textarea id="fieldDiscussion" placeholder="-"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Expected Additional Milk Procurement</label>
+                        <textarea id="fieldExpected" placeholder="-"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Remarks</label>
+                        <textarea id="fieldRemarks" placeholder="-"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn-primary" id="shareBtn">📤 Share to Telegram</button>
+                        <button class="btn btn-primary" id="submitBtn">✓ Submit Record</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <span id="dbStatus">Database: Ready</span>
+            </div>
+        </div>
+
+        <!-- PAGE 2: ADMIN LOGIN -->
+        <div id="pageAdminLogin" class="page">
+            <div class="login-container">
+                <div class="login-box">
+                    <div class="login-logo">
+                        <div class="login-logo-icon">VD</div>
+                        <div style="font-size: 14px; color: var(--muted); text-align: center;">Vijay Dairy</div>
+                    </div>
+
+                    <div class="login-title">Admin Login</div>
+
+                    <div class="login-form">
+                        <div class="login-error" id="loginError">❌ Invalid username or password</div>
+
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="adminUsername" placeholder="admin" autocomplete="username">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="adminPassword" placeholder="password" autocomplete="current-password">
+                        </div>
+
+                        <div class="login-buttons">
+                            <button class="btn btn-primary" id="loginBtn">LOGIN</button>
+                            <button class="btn btn-secondary" id="backFromLoginBtn">← Back</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 3: ADMIN DASHBOARD -->
+        <div id="pageAdmin" class="page">
+            <div class="header">
+                <button class="btn btn-secondary btn-small" id="backFromAdminBtn">← Back</button>
+                <span style="flex: 1; text-align: center;">Admin Dashboard</span>
+                <button class="btn btn-secondary btn-small" id="refreshBtn">⟳</button>
+            </div>
+
+            <div class="dashboard-content">
+                <!-- STATS -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Submissions</div>
+                        <div class="stat-value" id="totalStats">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Today's Submissions</div>
+                        <div class="stat-value" id="todayStats">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">This Month</div>
+                        <div class="stat-value" id="monthStats">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pending Share</div>
+                        <div class="stat-value" id="pendingStats">0</div>
+                    </div>
+                </div>
+
+                <!-- SEARCH -->
+                <div class="search-box">
+                    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search submissions...">
+                </div>
+
+                <!-- RECORDS TABLE -->
+                <div class="table-container">
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Location</th>
+                                <th>Vendor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTableBody">
+                            <tr>
+                                <td colspan="4" class="no-records">No records found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ADMIN ACTIONS -->
+                <div class="admin-actions">
+                    <button class="btn btn-primary" id="exportCSVBtn">📥 Export CSV</button>
+                    <button class="btn btn-primary" id="downloadPhotosBtn">📦 Download Photos</button>
+                    <button class="btn btn-danger" id="clearDataBtn">⚠️ Clear All Data</button>
+                    <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="recordModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <img id="modalPhoto" class="modal-photo" src="" alt="Photo">
+            <div class="modal-title">Submission Details</div>
+
+            <div class="modal-field">
+                <div class="modal-label">Timestamp</div>
+                <div class="modal-value" id="modalTimestamp">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Shift</div>
+                <div class="modal-value" id="modalShift">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Location</div>
+                <div class="modal-value" id="modalLocation">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">GPS Coordinates</div>
+                <div class="modal-value" id="modalGPS">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Accuracy</div>
+                <div class="modal-value" id="modalAccuracy">--</div>
+            </div>
+
+            <hr style="margin: 16px 0; border: none; border-top: 1px solid #e0e0e0;">
+
+            <div class="modal-field">
+                <div class="modal-label">VLCC & Vendor Name</div>
+                <div class="modal-value" id="modalVendor">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Route Name</div>
+                <div class="modal-value" id="modalRoute">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Dairy Name</div>
+                <div class="modal-value" id="modalDairy">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Contact No</div>
+                <div class="modal-value" id="modalContact">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Per Day Milk (Ltrs)</div>
+                <div class="modal-value" id="modalMilk">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Avg. Fat & SNF / Rate</div>
+                <div class="modal-value" id="modalFatSnf">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Additional Rs. Details</div>
+                <div class="modal-value" id="modalAdditional">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Discussion Points</div>
+                <div class="modal-value" id="modalDiscussion">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Expected Additional Milk Procurement</div>
+                <div class="modal-value" id="modalExpected">--</div>
+            </div>
+
+            <div class="modal-field">
+                <div class="modal-label">Remarks</div>
+                <div class="modal-value" id="modalRemarks">--</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // GLOBAL STATE
+        // ============================================
+        let currentPage = 'pageField';
+        let currentPosition = null;
+        let currentLocationName = null;
+        let videoStream = null;
+        let cameraFacingMode = 'environment';
+        let capturedPhoto = null;
+        let db = null;
+        let allRecords = [];
+        let filteredRecords = [];
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        async function initializeApp() {
+            registerServiceWorker();
+            initDB();
+            startGPS();
+            startCamera();
+            startClock();
+            setupEventListeners();
+            detectShift();
+        }
+
+        // ============================================
+        // SERVICE WORKER
+        // ============================================
+        async function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const swCode = `
+                    const CACHE_NAME = 'vd-geotag-v1';
+                    const urlsToCache = [
+                        './',
+                        './index.html'
+                    ];
+
+                    self.addEventListener('install', event => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME).then(cache => {
+                                return cache.addAll(urlsToCache).catch(() => {
+                                    return Promise.resolve();
+                                });
+                            })
+                        );
+                    });
+
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            caches.match(event.request).then(response => {
+                                return response || fetch(event.request).catch(() => {
+                                    return new Response('Offline');
+                                });
+                            })
+                        );
+                    });
+                    `;
+
+                    const blob = new Blob([swCode], {type: 'application/javascript'});
+                    const swUrl = URL.createObjectURL(blob);
+
+                    navigator.serviceWorker.register(swUrl).catch(() => {});
+                } catch (e) {
+                    console.log('Service Worker not supported');
+                }
+            }
+        }
+
+        // ============================================
+        // DATABASE
+        // ============================================
+        function initDB() {
+            return new Promise((resolve) => {
+                if (!('indexedDB' in window)) {
+                    console.log('IndexedDB not available, using localStorage');
+                    updateDBStatus();
+                    resolve();
+                    return;
+                }
+
+                const request = indexedDB.open('vd_geotag_db', 1);
+
+                request.onerror = () => {
+                    console.log('IndexedDB failed, using localStorage');
+                    updateDBStatus();
+                    resolve();
+                };
+
+                request.onsuccess = () => {
+                    db = request.result;
+                    updateDBStatus();
+                    loadAllRecords();
+                    resolve();
+                };
+
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains('records')) {
+                        database.createObjectStore('records', {keyPath: 'id'});
+                    }
+                };
+            });
+        }
+
+        function updateDBStatus() {
+            const status = db ? 'Database: Ready' : '⚠️ Database: localStorage';
+            document.getElementById('dbStatus').textContent = status;
+        }
+
+        function dbSave(record) {
+            if (db) {
+                try {
+                    const transaction = db.transaction(['records'], 'readwrite');
+                    const store = transaction.objectStore('records');
+                    store.add(record);
+                } catch (e) {
+                    console.log('IndexedDB save error:', e);
+                }
+            }
+            lsSave(record);
+        }
+
+        function lsSave(record) {
+            try {
+                let records = JSON.parse(localStorage.getItem('vd_geotag_records') || '[]');
+                records.push(record);
+                localStorage.setItem('vd_geotag_records', JSON.stringify(records));
+            } catch (e) {
+                console.log('LocalStorage error:', e);
+            }
+        }
+
+        async function loadAllRecords() {
+            allRecords = [];
+
+            if (db) {
+                return new Promise((resolve) => {
+                    try {
+                        const transaction = db.transaction(['records'], 'readonly');
+                        const store = transaction.objectStore('records');
+                        const request = store.getAll();
+
+                        request.onsuccess = () => {
+                            allRecords = request.result.sort((a, b) =>
+                                new Date(b.timestamp) - new Date(a.timestamp)
+                            );
+                            resolve();
+                        };
+
+                        request.onerror = () => {
+                            loadFromLS();
+                            resolve();
+                        };
+                    } catch (e) {
+                        loadFromLS();
+                        resolve();
+                    }
+                });
+            } else {
+                loadFromLS();
+            }
+        }
+
+        function loadFromLS() {
+            try {
+                allRecords = JSON.parse(localStorage.getItem('vd_geotag_records') || '[]')
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            } catch (e) {
+                allRecords = [];
+            }
+        }
+
+        async function clearAllData() {
+            if (db) {
+                return new Promise((resolve) => {
+                    try {
+                        const transaction = db.transaction(['records'], 'readwrite');
+                        const store = transaction.objectStore('records');
+                        store.clear();
+                        transaction.oncomplete = () => {
+                            localStorage.removeItem('vd_geotag_records');
+                            allRecords = [];
+                            resolve();
+                        };
+                    } catch (e) {
+                        localStorage.removeItem('vd_geotag_records');
+                        allRecords = [];
+                        resolve();
+                    }
+                });
+            } else {
+                localStorage.removeItem('vd_geotag_records');
+                allRecords = [];
+            }
+        }
+
+        // ============================================
+        // GPS & LOCATION REVERSE GEOCODING
+        // ============================================
+        function startGPS() {
+            if (!('geolocation' in navigator)) {
+                console.log('Geolocation not available');
+                return;
+            }
+
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    currentPosition = position.coords;
+                    updateGPSDisplay();
+                    reverseGeocodeLocation();
+                },
+                (error) => {
+                    console.log('GPS error:', error.message);
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 10000
+                }
+            );
+        }
+
+        function updateGPSDisplay() {
+            if (currentPosition) {
+                const lat = currentPosition.latitude.toFixed(6);
+                const lon = currentPosition.longitude.toFixed(6);
+                const alt = currentPosition.altitude ? currentPosition.altitude.toFixed(1) : '--';
+                const acc = currentPosition.accuracy ? currentPosition.accuracy.toFixed(1) : '--';
+
+                document.getElementById('gpsLat').textContent = lat;
+                document.getElementById('gpsLon').textContent = lon;
+                document.getElementById('gpsAlt').textContent = alt + ' m';
+                document.getElementById('gpsAcc').textContent = '±' + acc + ' m';
+            }
+        }
+
+        async function reverseGeocodeLocation() {
+            if (!currentPosition) return;
+
+            const lat = currentPosition.latitude;
+            const lon = currentPosition.longitude;
+
+            document.getElementById('locationStatus').textContent = 'Fetching location...';
+
+            try {
+                // Using Nominatim API (free, no key needed)
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+                    {headers: {'Accept-Language': 'en'}}
+                );
+
+                if (!response.ok) {
+                    throw new Error('Reverse geocoding failed');
+                }
+
+                const data = await response.json();
+                const address = data.address || {};
+
+                const village = address.village || address.hamlet || address.town || 'Not detected';
+                const city = address.city || address.town || address.county || '--';
+                const state = address.state || '--';
+
+                currentLocationName = village;
+
+                document.getElementById('locVillage').textContent = village;
+                document.getElementById('locCity').textContent = city;
+                document.getElementById('locState').textContent = state;
+                document.getElementById('fieldLocation').value = village;
+                document.getElementById('locationStatus').textContent = '';
+
+            } catch (error) {
+                console.log('Reverse geocoding error:', error);
+                document.getElementById('locVillage').textContent = 'Unable to detect';
+                document.getElementById('locationStatus').textContent = 'Check internet connection';
+                document.getElementById('fieldLocation').value = 'Manual entry required';
+            }
+        }
+
+        // ============================================
+        // CAMERA
+        // ============================================
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: cameraFacingMode,
+                        width: {ideal: 1280},
+                        height: {ideal: 960}
+                    },
+                    audio: false
+                };
+
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const videoElement = document.getElementById('videoFeed');
+                videoElement.srcObject = videoStream;
+            } catch (error) {
+                console.log('Camera error:', error);
+                showMessage('Camera not available', 'error');
+            }
+        }
+
+        async function flipCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+            cameraFacingMode = cameraFacingMode === 'environment' ? 'user' : 'environment';
+            await startCamera();
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('videoFeed');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            addPhotoOverlay(ctx, canvas.width, canvas.height);
+
+            capturedPhoto = canvas.toDataURL('image/jpeg', 0.85);
+
+            document.getElementById('previewImg').src = capturedPhoto;
+            document.getElementById('photoPreview').classList.add('active');
+            document.getElementById('photoActions').classList.add('active');
+        }
+
+        function addPhotoOverlay(ctx, width, height) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, height - 80, width, 80);
+
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'left';
+
+            // GPS coordinates
+            const gpsText = currentPosition
+                ? `${currentPosition.latitude.toFixed(4)}, ${currentPosition.longitude.toFixed(4)}`
+                : 'GPS unavailable';
+            ctx.fillText(gpsText, 10, height - 50);
+
+            // Location name
+            const locText = currentLocationName || 'Location detecting...';
+            ctx.fillText(locText, 10, height - 30);
+
+            // Timestamp
+            const now = new Date();
+            const timeText = now.toLocaleString('en-IN');
+            ctx.textAlign = 'right';
+            ctx.fillText(timeText, width - 10, height - 30);
+        }
+
+        function confirmPhoto() {
+            document.getElementById('photoPreview').classList.remove('active');
+            document.getElementById('photoActions').classList.remove('active');
+            document.getElementById('formSection').classList.add('active');
+        }
+
+        function retakePhoto() {
+            capturedPhoto = null;
+            document.getElementById('previewImg').src = '';
+            document.getElementById('photoPreview').classList.remove('active');
+            document.getElementById('photoActions').classList.remove('active');
+        }
+
+        // ============================================
+        // CLOCK
+        // ============================================
+        function startClock() {
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const options = {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            };
+            const formatted = now.toLocaleString('en-IN', options);
+            document.getElementById('clockDisplay').textContent = formatted;
+        }
+
+        // ============================================
+        // SHIFT DETECTION
+        // ============================================
+        function detectShift() {
+            const hour = new Date().getHours();
+            let shift = 'Other';
+
+            if (hour >= 5 && hour < 12) {
+                shift = 'Morning';
+            } else if (hour >= 16 && hour < 22) {
+                shift = 'Evening';
+            }
+
+            const date = new Date();
+            const dateStr = String(date.getDate()).padStart(2, '0') + '-' +
+                           String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                           date.getFullYear();
+
+            document.getElementById('fieldDateShift').value = `${dateStr}, ${shift}`;
+            return shift;
+        }
+
+        // ============================================
+        // FORM SUBMISSION
+        // ============================================
+        function submitRecord() {
+            if (!capturedPhoto) {
+                showMessage('Please capture a photo first', 'error');
+                return;
+            }
+
+            const now = new Date();
+            const timestamp = now.toISOString();
+            const dateStr = String(now.getDate()).padStart(2, '0') + '-' +
+                           String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                           now.getFullYear();
+            const timeStr = String(now.getHours()).padStart(2, '0') + ':' +
+                           String(now.getMinutes()).padStart(2, '0') + ':' +
+                           String(now.getSeconds()).padStart(2, '0');
+
+            const shift = detectShift();
+
+            const record = {
+                id: timestamp,
+                date: dateStr,
+                time: timeStr,
+                timestamp: timestamp,
+                shift: shift,
+
+                // GPS & Location
+                lat: currentPosition?.latitude || null,
+                lon: currentPosition?.longitude || null,
+                altitude: currentPosition?.altitude || null,
+                accuracy: currentPosition?.accuracy || null,
+                location: currentLocationName || document.getElementById('fieldLocation').value,
+
+                // Photo
+                photo: capturedPhoto,
+
+                // Form fields
+                vendorName: document.getElementById('fieldVendor').value || '-',
+                routeName: document.getElementById('fieldRoute').value || '-',
+                dairyName: document.getElementById('fieldDairy').value || '-',
+                contactNo: document.getElementById('fieldContact').value || '-',
+                milkLtrs: document.getElementById('fieldMilk').value || '-',
+                fatSnf: document.getElementById('fieldFatSnf').value || '-',
+                additionalRate: document.getElementById('fieldAdditional').value || '-',
+                discussionPoint: document.getElementById('fieldDiscussion').value || '-',
+                procurement: document.getElementById('fieldExpected').value || '-',
+                noteField: document.getElementById('fieldRemarks').value || '-',
+
+                // Share tracking
+                shareTime: null,
+                shareAttempted: false
+            };
+
+            dbSave(record);
+            showMessage('✓ Record submitted successfully', 'success');
+            resetForm();
+            loadAllRecords();
+        }
+
+        function resetForm() {
+            document.getElementById('fieldVendor').value = '';
+            document.getElementById('fieldRoute').value = '';
+            document.getElementById('fieldDairy').value = '';
+            document.getElementById('fieldContact').value = '';
+            document.getElementById('fieldMilk').value = '';
+            document.getElementById('fieldFatSnf').value = '';
+            document.getElementById('fieldAdditional').value = '';
+            document.getElementById('fieldDiscussion').value = '';
+            document.getElementById('fieldExpected').value = '';
+            document.getElementById('fieldRemarks').value = '';
+
+            capturedPhoto = null;
+            document.getElementById('previewImg').src = '';
+            document.getElementById('photoPreview').classList.remove('active');
+            document.getElementById('photoActions').classList.remove('active');
+            document.getElementById('formSection').classList.remove('active');
+        }
+
+        // ============================================
+        // SHARE TO TELEGRAM
+        // ============================================
+        async function shareReport() {
+            if (!capturedPhoto) {
+                showMessage('Please capture a photo first', 'error');
+                return;
+            }
+
+            const dateShift = document.getElementById('fieldDateShift').value;
+            const shift = dateShift.split(', ')[1] || 'Other';
+
+            const metadata = `VLCC SUPERVISOR REPORT
+════════════════════════
+📸 Date & Time: ${dateShift}
+🕐 Shift: ${shift}
+📍 Location: ${currentLocationName || 'Detecting...'}
+
+MEETING DETAILS:
+Vendor: ${document.getElementById('fieldVendor').value || '-'}
+Route: ${document.getElementById('fieldRoute').value || '-'}
+Dairy: ${document.getElementById('fieldDairy').value || '-'}
+Contact: ${document.getElementById('fieldContact').value || '-'}
+Daily Milk: ${document.getElementById('fieldMilk').value || '-'}
+Fat & SNF: ${document.getElementById('fieldFatSnf').value || '-'}
+Additional: ${document.getElementById('fieldAdditional').value || '-'}
+Discussion: ${document.getElementById('fieldDiscussion').value || '-'}
+Expected Milk: ${document.getElementById('fieldExpected').value || '-'}
+Remarks: ${document.getElementById('fieldRemarks').value || '-'}
+
+GPS: ${currentPosition?.latitude.toFixed(6)}, ${currentPosition?.longitude.toFixed(6)} ±${currentPosition?.accuracy.toFixed(1)}m`;
+
+            if (navigator.share) {
+                try {
+                    const response = await fetch(capturedPhoto);
+                    const blob = await response.blob();
+
+                    await navigator.share({
+                        title: 'VLCC Report',
+                        text: metadata,
+                        files: [new File([blob], 'report.jpg', {type: 'image/jpeg'})]
+                    });
+
+                    showMessage('✓ Report shared successfully', 'success');
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        showMessage('Share failed, showing fallback options', 'error');
+                        showShareFallback(metadata);
+                    }
+                }
+            } else {
+                showShareFallback(metadata);
+            }
+        }
+
+        function showShareFallback(metadata) {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <button class="modal-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+                    <div class="modal-title">Share Options</div>
+                    <p style="margin-bottom: 16px; font-size: 13px; color: #666;">
+                        navigator.share is not available. Choose an option below:
+                    </p>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button class="btn btn-primary" onclick="downloadReportPhoto()">📷 Download Photo</button>
+                        <button class="btn btn-primary" onclick="copyReportText('${metadata.replace(/'/g, "\\'")}')">📋 Copy Details</button>
+                        <button class="btn btn-primary" onclick="downloadReportText('${metadata.replace(/'/g, "\\'")}')">📄 Download Text</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        }
+
+        function downloadReportPhoto() {
+            const link = document.createElement('a');
+            link.href = capturedPhoto;
+            link.download = `report_${new Date().toISOString().split('T')[0]}.jpg`;
+            link.click();
+            showMessage('✓ Photo downloaded', 'success');
+        }
+
+        function copyReportText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('✓ Details copied to clipboard', 'success');
+            });
+        }
+
+        function downloadReportText(text) {
+            const blob = new Blob([text], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `report_${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showMessage('✓ Text downloaded', 'success');
+        }
+
+        // ============================================
+        // ADMIN LOGIN
+        // ============================================
+        function doLogin() {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+
+            if (username === 'admin' && password === 'VD@') {
+                document.getElementById('loginError').classList.remove('active');
+                showPage('pageAdmin');
+                loadAllRecords().then(() => renderRecords());
+            } else {
+                document.getElementById('loginError').classList.add('active');
+            }
+        }
+
+        // ============================================
+        // ADMIN DASHBOARD
+        // ============================================
+        async function renderRecords() {
+            const tbody = document.getElementById('recordsTableBody');
+
+            if (allRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="no-records">No records found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = allRecords.map(record => {
+                let status = '✓';
+                if (record.shareAttempted) {
+                    status = '📤';
+                }
+
+                return `
+                    <tr onclick="viewRecord('${record.id}')">
+                        <td>${record.timestamp}</td>
+                        <td>${record.location || record.lat?.toFixed(3) || '--'}</td>
+                        <td>${record.vendorName}</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            updateStatistics();
+        }
+
+        function updateStatistics() {
+            const today = new Date().toISOString().split('T')[0];
+            const thisMonth = new Date().toISOString().substring(0, 7);
+
+            const totalCount = allRecords.length;
+            const todayCount = allRecords.filter(r => r.timestamp.split('T')[0] === today).length;
+            const monthCount = allRecords.filter(r => r.timestamp.substring(0, 7) === thisMonth).length;
+            const pendingCount = allRecords.filter(r => !r.shareAttempted).length;
+
+            document.getElementById('totalStats').textContent = totalCount;
+            document.getElementById('todayStats').textContent = todayCount;
+            document.getElementById('monthStats').textContent = monthCount;
+            document.getElementById('pendingStats').textContent = pendingCount;
+        }
+
+        function searchRecords() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+
+            if (query === '') {
+                filteredRecords = allRecords;
+            } else {
+                filteredRecords = allRecords.filter(r => {
+                    return r.vendorName.toLowerCase().includes(query) ||
+                           r.dairyName.toLowerCase().includes(query) ||
+                           r.routeName.toLowerCase().includes(query) ||
+                           (r.location && r.location.toLowerCase().includes(query)) ||
+                           (r.lat && r.lon && `${r.lat},${r.lon}`.includes(query));
+                });
+            }
+
+            renderFilteredRecords();
+        }
+
+        function renderFilteredRecords() {
+            const tbody = document.getElementById('recordsTableBody');
+
+            if (filteredRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="no-records">No records found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredRecords.map(record => {
+                let status = '✓';
+                if (record.shareAttempted) {
+                    status = '📤';
+                }
+
+                return `
+                    <tr onclick="viewRecord('${record.id}')">
+                        <td>${record.timestamp}</td>
+                        <td>${record.location || record.lat?.toFixed(3) || '--'}</td>
+                        <td>${record.vendorName}</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function viewRecord(recordId) {
+            const record = allRecords.find(r => r.id === recordId);
+            if (!record) return;
+
+            document.getElementById('modalPhoto').src = record.photo;
+            document.getElementById('modalTimestamp').textContent = record.timestamp;
+            document.getElementById('modalShift').textContent = record.shift;
+            document.getElementById('modalLocation').textContent = record.location || 'Not recorded';
+            document.getElementById('modalGPS').textContent =
+                `${record.lat?.toFixed(6) || '--'}, ${record.lon?.toFixed(6) || '--'}`;
+            document.getElementById('modalAccuracy').textContent =
+                `±${record.accuracy?.toFixed(1) || '--'} m`;
+
+            document.getElementById('modalVendor').textContent = record.vendorName || '--';
+            document.getElementById('modalRoute').textContent = record.routeName || '--';
+            document.getElementById('modalDairy').textContent = record.dairyName || '--';
+            document.getElementById('modalContact').textContent = record.contactNo || '--';
+            document.getElementById('modalMilk').textContent = record.milkLtrs || '--';
+            document.getElementById('modalFatSnf').textContent = record.fatSnf || '--';
+            document.getElementById('modalAdditional').textContent = record.additionalRate || '--';
+            document.getElementById('modalDiscussion').textContent = record.discussionPoint || '--';
+            document.getElementById('modalExpected').textContent = record.procurement || '--';
+            document.getElementById('modalRemarks').textContent = record.noteField || '--';
+
+            document.getElementById('recordModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('recordModal').classList.remove('active');
+        }
+
+        // ============================================
+        // EXPORT FUNCTIONS
+        // ============================================
+        function exportCSV() {
+            if (allRecords.length === 0) {
+                showMessage('No records to export', 'error');
+                return;
+            }
+
+            const headers = [
+                'Timestamp', 'Date', 'Time', 'Shift', 'Location',
+                'Latitude', 'Longitude', 'Altitude', 'Accuracy',
+                'Vendor', 'Route', 'Dairy', 'Contact', 'Milk (L)', 'Fat&SNF', 'Additional', 'Discussion', 'Expected', 'Remarks'
+            ];
+
+            const rows = allRecords.map(r => [
+                r.timestamp,
+                r.date,
+                r.time,
+                r.shift,
+                r.location || '',
+                r.lat || '',
+                r.lon || '',
+                r.altitude || '',
+                r.accuracy || '',
+                r.vendorName,
+                r.routeName,
+                r.dairyName,
+                r.contactNo,
+                r.milkLtrs,
+                r.fatSnf,
+                r.additionalRate,
+                r.discussionPoint,
+                r.procurement,
+                r.noteField
+            ]);
+
+            const csvContent = [
+                headers.map(h => `"${h}"`).join(','),
+                ...rows.map(row => row.map(cell => {
+                    const str = String(cell || '').replace(/"/g, '""');
+                    return `"${str}"`;
+                }).join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `vd_records_${new Date().toISOString().split('T')[0]}.csv`);
+            link.click();
+            URL.revokeObjectURL(url);
+
+            showMessage('✓ CSV exported successfully', 'success');
+        }
+
+        function downloadPhotos() {
+            if (allRecords.length === 0) {
+                showMessage('No photos to download', 'error');
+                return;
+            }
+
+            allRecords.forEach((record, index) => {
+                const link = document.createElement('a');
+                link.href = record.photo;
+                link.download = `photo_${record.timestamp.replace(/[:.]/g, '-')}.jpg`;
+                link.click();
+            });
+
+            showMessage(`✓ ${allRecords.length} photos download started`, 'success');
+        }
+
+        async function clearAllDataConfirm() {
+            if (confirm('⚠️ Are you sure? This cannot be undone. All data will be deleted permanently.')) {
+                await clearAllData();
+                await loadAllRecords();
+                renderRecords();
+                showMessage('✓ All data cleared', 'success');
+            }
+        }
+
+        // ============================================
+        // PAGE NAVIGATION
+        // ============================================
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+            currentPage = pageId;
+
+            if (pageId === 'pageAdmin') {
+                loadAllRecords().then(() => {
+                    renderRecords();
+                    document.getElementById('searchInput').value = '';
+                    filteredRecords = allRecords;
+                });
+            }
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        function setupEventListeners() {
+            // Field page
+            document.getElementById('adminLoginBtn').addEventListener('click', () => showPage('pageAdminLogin'));
+            document.getElementById('flipCameraBtn').addEventListener('click', flipCamera);
+            document.getElementById('captureBtn').addEventListener('click', capturePhoto);
+            document.getElementById('confirmPhotoBtn').addEventListener('click', confirmPhoto);
+            document.getElementById('retakeBtn').addEventListener('click', retakePhoto);
+            document.getElementById('shareBtn').addEventListener('click', shareReport);
+            document.getElementById('submitBtn').addEventListener('click', submitRecord);
+
+            // Login page
+            document.getElementById('adminUsername').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') doLogin();
+            });
+            document.getElementById('adminPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') doLogin();
+            });
+            document.getElementById('loginBtn').addEventListener('click', doLogin);
+            document.getElementById('backFromLoginBtn').addEventListener('click', () => {
+                showPage('pageField');
+                document.getElementById('adminUsername').value = '';
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('loginError').classList.remove('active');
+            });
+
+            // Admin page
+            document.getElementById('backFromAdminBtn').addEventListener('click', () => showPage('pageField'));
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                loadAllRecords().then(() => {
+                    renderRecords();
+                    document.getElementById('searchInput').value = '';
+                    filteredRecords = allRecords;
+                });
+            });
+            document.getElementById('searchInput').addEventListener('input', searchRecords);
+            document.getElementById('exportCSVBtn').addEventListener('click', exportCSV);
+            document.getElementById('downloadPhotosBtn').addEventListener('click', downloadPhotos);
+            document.getElementById('clearDataBtn').addEventListener('click', clearAllDataConfirm);
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                showPage('pageField');
+                document.getElementById('adminUsername').value = '';
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('loginError').classList.remove('active');
+            });
+
+            // Modal
+            document.getElementById('recordModal').addEventListener('click', (e) => {
+                if (e.target.id === 'recordModal') closeModal();
+            });
+        }
+
+        // ============================================
+        // MESSAGES
+        // ============================================
+        function showMessage(text, type = 'success') {
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                message.style.animation = 'slideUp 0.3s ease reverse';
+                setTimeout(() => message.remove(), 300);
+            }, 3000);
+        }
+
+        // ============================================
+        // START APP
+        // ============================================
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+    </script>
+</body>
+</html>
